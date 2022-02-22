@@ -21,4 +21,11 @@ class Subject
         return trim(trim($string), ',.');
     }
 
+    /**
+     * @return string
+     */
+    public function getBrand(): string
+    {
+        return $this->brand;
+    }
 }
