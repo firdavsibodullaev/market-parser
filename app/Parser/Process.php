@@ -5,14 +5,13 @@ namespace App\Parser;
 use App\Models\Address;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class Process
 {
 
     public function start()
     {
-        if ($this->getSubjectsList()->isNotEmpty()) {
+        if ($this->getParsedData()->isNotEmpty()) {
             return dump('Parsing was released');
         }
         $subjects = $this->getSubjectsList();
