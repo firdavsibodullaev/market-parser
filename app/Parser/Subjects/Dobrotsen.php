@@ -12,8 +12,10 @@ class Dobrotsen extends Subject
      */
     public function __construct(string $url)
     {
-        $this->url = $url . '/busy/contacts';
+        $this->url = $url . '/about/shops/'; // /busy/contacts  /about/shops/
         $this->brand = 'Доброцен';
+
+        $this->getMapCoordinates();
     }
 
 
@@ -63,4 +65,40 @@ class Dobrotsen extends Subject
         return $data;
     }
 
+    /**
+     * Pattern for preg_match_all in the getMapCoordinates()
+     */
+    private $pattern2 = "/\d{2,3}\.\d+, \d{2,3}\.\d+|\d{2,3}\.\d+,\d{2,3}\.\d+|'\d{2,3}\.\d+,\d{2,3}\.\d+'|'\d{2,3}\.\d+, \d{2,3}\.\d+'x/";
+    private $pattern1 = "/\[\d{4}\] = new ymaps.Placemark\(\[\d{2,3}\.\d+, \d{2,3}\.\d+\]|\[\d{2,3}\.\d+,\d{2,3}\.\d+\]|\['\d{2,3}\.\d+,\d{2,3}\.\d+'\]|\['\d{2,3}\.\d+, \d{2,3}\.\d+'\]/";
+
+    /**
+     * Function for getting coordinates from the map
+     * @return array
+     */
+    public function getMapCoordinates()
+    {
+        $html = file_get_contents($this->url);
+        $crawler = new Crawler($html);
+        $crawler->filter('html body script')->reduce(function(Crawler $node, $index){
+            if($index == 26){
+                preg_match_all($this->pattern1, $node->text(), $response);
+                preg_match_all($this->pattern2, implode(',', $response['0']), $clearCoordinates);
+                preg_match_all("/\[\d{4}\]/", implode(',', $response['0']), $marketsId);
+                $coordinates = explode(', ', implode(', ', $clearCoordinates['0']));
+                $result = [];
+                for($i = 0; $i <= count($coordinates); $i = $i + 2)
+                {
+                    if(isset($coordinates[$i + 1])){
+                        $result[] = ['lon' => $coordinates[$i], 'lat' => $coordinates[$i+1]];
+                    }
+                }
+                $arr = [];
+                foreach($result as $key => $test)
+                {
+                    $arr[] = ['lon' => $test['lon'], 'lat' => $test['lat'], 'marketId' => $marketsId[0][$key]];
+                }
+                return $arr; // Return the coordinates with Market id
+            }
+        });
+    }
 }
